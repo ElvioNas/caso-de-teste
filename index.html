@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cenários de Caso de Teste</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            padding: 20px;
+        }
+        .container, .saved-scenarios {
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 80%;
+            max-width: 1200px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        h1, h2 {
+            text-align: center;
+            color: #333;
+        }
+        label {
+            font-weight: bold;
+            margin-top: 10px;
+            color: #333;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .flex-row {
+            display: flex;
+            gap: 20px;
+        }
+        .flex-col {
+            flex: 1;
+        }
+        .action-step {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .step-number {
+            font-weight: bold;
+            color: #007bff;
+        }
+        .delete-btn {
+            background-color: #e74c3c;
+            color: #fff;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .delete-btn:hover {
+            background-color: #c0392b;
+        }
+        button {
+            padding: 10px;
+            background-color: #007bff;
+            color: #ffffff;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        .edit-btn {
+            background-color: #f39c12;
+            color: #fff;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .edit-btn:hover {
+            background-color: #d35400;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Cenário de Caso de Teste</h1>
+        <label for="nome">Nome do Cenário</label>
+        <input type="text" id="nome" placeholder="Digite o nome do cenário">
+
+        <label for="objetivo">Objetivo</label>
+        <textarea id="objetivo" rows="3" placeholder="Descreva o objetivo"></textarea>
+
+        <label>Pré-condições</label>
+        <div id="precondicoes"></div>
+        <button onclick="adicionarPreCondicao()">Adicionar Pré-condição</button>
+
+        <div class="flex-row">
+            <div class="flex-col">
+                <label>Ações</label>
+                <div id="acoes"></div>
+                <button onclick="adicionarPasso('acao')">Adicionar Ação</button>
+            </div>
+            <div class="flex-col">
+                <label>Resultados Esperados</label>
+                <div id="resultados"></div>
+                <button onclick="adicionarPasso('resultado')">Adicionar Resultado</button>
+            </div>
+        </div>
+
+        <button onclick="salvarCenario()">Salvar Cenário</button>
+    </div>
+
+    <div class="saved-scenarios">
+        <h2>Cenários Salvos</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Nome do Cenário</th>
+                    <th>Objetivo</th>
+                    <th>Pré-condições</th>
+                    <th>Ações</th>
+                    <th>Resultados Esperados</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="cenariosSalvos">
+            </tbody>
+        </table>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+
+    <script>
+        let contadorAcoes = 1;
+        let contadorResultados = 1;
+        let contadorPreCondicoes = 1;
+        let cenarios = [];
+        let editIndex = null;
+
+        function adicionarPreCondicao(texto = '') {
+            const container = document.getElementById('precondicoes');
+
+            const preCondicaoDiv = document.createElement('div');
+            preCondicaoDiv.className = 'action-step';
+
+            const numeroPreCondicao = document.createElement('span');
+            numeroPreCondicao.className = 'step-number';
+            numeroPreCondicao.textContent = contadorPreCondicoes + '.';
+
+            const inputPreCondicao = document.createElement('textarea');
+            inputPreCondicao.rows = 2;
+            inputPreCondicao.placeholder = 'Descreva a pré-condição';
+            inputPreCondicao.className = 'pre-condicao';
+            inputPreCondicao.value = texto;
+
+            const deleteButton = document.createElement('button');
+            deleteButton.textContent = 'Excluir';
+            deleteButton.className = 'delete-btn';
+            deleteButton.onclick = function () {
+                container.removeChild(preCondicaoDiv);
+            };
+
+            preCondicaoDiv.appendChild(numeroPreCondicao);
+            preCondicaoDiv.appendChild(inputPreCondicao);
+            preCondicaoDiv.appendChild(deleteButton);
+            container.appendChild(preCondicaoDiv);
+
+            contadorPreCondicoes++;
+        }
+
+        function adicionarPasso(tipo, texto = '') {
+            const container = tipo === 'acao' ? document.getElementById('acoes') : document.getElementById('resultados');
+            const contador = tipo === 'acao' ? contadorAcoes++ : contadorResultados++;
+
+            const passoDiv = document.createElement('div');
+            passoDiv.className = 'action-step';
+
+            const numeroPasso = document.createElement('span');
+            numeroPasso.className = 'step-number';
+            numeroPasso.textContent = contador + '.';
+
+            const inputPasso = document.createElement('textarea');
+            inputPasso.rows = 2;
+            inputPasso.placeholder = tipo === 'acao' ? 'Descreva a ação' : 'Descreva o resultado esperado';
+            inputPasso.className = tipo;
+            inputPasso.value = texto;
+
+            const deleteButton = document.createElement('button');
+            deleteButton.textContent = 'Excluir';
+            deleteButton.className = 'delete-btn';
+            deleteButton.onclick = function () {
+                container.removeChild(passoDiv);
+            };
+
+            passoDiv.appendChild(numeroPasso);
+            passoDiv.appendChild(inputPasso);
+            passoDiv.appendChild(deleteButton);
+            container.appendChild(passoDiv);
+        }
+
+        function salvarCenario() {
+            const nome = document.getElementById('nome').value;
+            const objetivo = document.getElementById('objetivo').value;
+            const precondicoes = Array.from(document.getElementsByClassName('pre-condicao')).map((el, index) => `${index + 1}. ${el.value}`);
+            const acoes = Array.from(document.getElementsByClassName('acao')).map((el, index) => `${index + 1}. ${el.value}`);
+            const resultados = Array.from(document.getElementsByClassName('resultado')).map((el, index) => `${index + 1}. ${el.value}`);
+
+            const novoCenario = { nome, objetivo, precondicoes, acoes, resultados };
+
+            if (editIndex !== null) {
+                cenarios[editIndex] = novoCenario;
+                editIndex = null;
+            } else {
+                cenarios.push(novoCenario);
+            }
+            atualizarTabela();
+            limparCampos();
+        }
+
+        function atualizarTabela() {
+            const tabela = document.getElementById('cenariosSalvos');
+            tabela.innerHTML = '';
+            cenarios.forEach((cenario, index) => {
+                const row = tabela.insertRow();
+
+                row.insertCell(0).textContent = cenario.nome;
+                row.insertCell(1).textContent = cenario.objetivo;
+                row.insertCell(2).innerHTML = cenario.precondicoes.join('<br>');
+                row.insertCell(3).innerHTML = cenario.acoes.join('<br>');
+                row.insertCell(4).innerHTML = cenario.resultados.join('<br>');
+
+                const actionsCell = row.insertCell(5);
+
+                const editButton = document.createElement('button');
+                editButton.textContent = 'Editar';
+                editButton.className = 'edit-btn';
+                editButton.onclick = function () {
+                    editarCenario(index);
+                };
+
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Excluir';
+                deleteButton.className = 'delete-btn';
+                deleteButton.onclick = function () {
+                    excluirCenario(index);
+                };
+
+                const exportButton = document.createElement('button');
+                exportButton.textContent = 'PDF';
+                exportButton.className = 'delete-btn';
+                exportButton.onclick = function () {
+                    exportarParaPDF(index);
+                };
+
+                actionsCell.appendChild(editButton);
+                actionsCell.appendChild(deleteButton);
+                actionsCell.appendChild(exportButton);
+            });
+        }
+
+        function editarCenario(index) {
+            const cenario = cenarios[index];
+            document.getElementById('nome').value = cenario.nome;
+            document.getElementById('objetivo').value = cenario.objetivo;
+
+            document.getElementById('precondicoes').innerHTML = '';
+            contadorPreCondicoes = 1;
+            cenario.precondicoes.forEach(preCondicao => adicionarPreCondicao(preCondicao.split('. ')[1] || ''));
+
+            document.getElementById('acoes').innerHTML = '';
+            contadorAcoes = 1;
+            cenario.acoes.forEach(acao => adicionarPasso('acao', acao.split('. ')[1] || ''));
+
+            document.getElementById('resultados').innerHTML = '';
+            contadorResultados = 1;
+            cenario.resultados.forEach(resultado => adicionarPasso('resultado', resultado.split('. ')[1] || ''));
+
+            editIndex = index;
+        }
+
+        function excluirCenario(index) {
+            cenarios.splice(index, 1);
+            atualizarTabela();
+        }
+
+        function exportarParaPDF(index) {
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF();
+
+            const cenario = cenarios[index];
+
+            pdf.text(`Nome do Cenário: ${cenario.nome}`, 10, 10);
+            pdf.text(`Objetivo:`, 10, 20);
+            pdf.text(cenario.objetivo, 10, 30);
+
+            pdf.text(`Pré-condições:`, 10, 40);
+            let offset = 50;
+            cenario.precondicoes.forEach((preCondicao, index) => {
+                pdf.text(`${index + 1}. ${preCondicao}`, 10, offset);
+                offset += 10;
+            });
+
+            offset += 10;
+            pdf.text(`Ações:`, 10, offset);
+            offset += 10;
+            cenario.acoes.forEach((acao, index) => {
+                pdf.text(`${index + 1}. ${acao}`, 10, offset);
+                offset += 10;
+            });
+
+            offset += 10;
+            pdf.text(`Resultados Esperados:`, 10, offset);
+            offset += 10;
+            cenario.resultados.forEach((resultado, index) => {
+                pdf.text(`${index + 1}. ${resultado}`, 10, offset);
+                offset += 10;
+            });
+
+            pdf.save(`${cenario.nome}.pdf`);
+        }
+
+        function limparCampos() {
+            document.getElementById('nome').value = '';
+            document.getElementById('objetivo').value = '';
+            document.getElementById('precondicoes').innerHTML = '';
+            document.getElementById('acoes').innerHTML = '';
+            document.getElementById('resultados').innerHTML = '';
+            contadorPreCondicoes = 1;
+            contadorAcoes = 1;
+            contadorResultados = 1;
+            editIndex = null;
+        }
+    </script>
+</body>
+</html>
