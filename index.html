@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cenários de Caso de Teste</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            padding: 20px;
+        }
+        .container, .saved-scenarios {
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 80%;
+            max-width: 1200px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        h1, h2 {
+            text-align: center;
+            color: #333;
+        }
+        label {
+            font-weight: bold;
+            margin-top: 10px;
+            color: #333;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .flex-row {
+            display: flex;
+            gap: 20px;
+        }
+        .flex-col {
+            flex: 1;
+        }
+        .action-step {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .step-number {
+            font-weight: bold;
+            color: #007bff;
+        }
+        .delete-btn, .edit-btn, .pdf-btn {
+            background-color: #e74c3c;
+            color: #fff;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 50%;
+        }
+        .edit-btn {
+            background-color: #f39c12;
+        }
+        .pdf-btn {
+            background-color: #3498db;
+        }
+        .delete-btn:hover, .edit-btn:hover, .pdf-btn:hover {
+            opacity: 0.8;
+        }
+        button {
+            padding: 10px;
+            background-color: #007bff;
+            color: #ffffff;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        .checkbox-column {
+            width: 30px;
+        }
+        .grid-buttons {
+            display: flex;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Cenário de Caso de Teste</h1>
+
+        <div class="flex-row">
+            <div class="flex-col">
+                <label for="empresa">Nome da Empresa</label>
+                <input type="text" id="empresa" placeholder="Digite o nome da empresa (máx 30 caracteres)" maxlength="30">
+            </div>
+            <div class="flex-col">
+                <label for="dataCriacao">Data de Criação</label>
+                <input type="date" id="dataCriacao">
+            </div>
+            <div class="flex-col">
+                <label for="autor">Autor</label>
+                <input type="text" id="autor" placeholder="Digite o nome do autor (máx 30 caracteres)" maxlength="30">
+            </div>
+        </div>
+
+        <div class="flex-row">
+            <div class="flex-col">
+                <label for="nome">Nome do Cenário</label>
+                <input type="text" id="nome" placeholder="Digite o nome do cenário">
+            </div>
+            <div class="flex-col">
+                <label for="criticidade">Criticidade:  </label>
+                <div style="display: inline-flex; gap: 10px; align-items: center;">
+                    <input type="radio" id="alto" name="criticidade" value="Alto">
+                    <label for="alto">Alto</label>
+                
+                    <input type="radio" id="medio" name="criticidade" value="Médio">
+                    <label for="medio">Médio</label>
+        
+                    <input type="radio" id="baixo" name="criticidade" value="Baixo">
+                    <label for="baixo">Baixo</label>
+                </div>
+            </div>
+        </div>
+        
+
+        <label for="objetivo">Objetivo</label>
+        <textarea id="objetivo" rows="3" placeholder="Descreva o objetivo"></textarea>
+
+        <label>Pré-condições</label>
+        <div id="precondicoes"></div>
+        <button id="adicionarPreCondicaoBtn" onclick="adicionarPreCondicao()">Adicionar Pré-condição</button>
+
+        <div class="flex-row">
+            <div class="flex-col">
+                <label>Ações</label>
+                <div id="acoes"></div>
+                <button onclick="adicionarPasso('acao')">Adicionar Ação</button>
+            </div>
+            <div class="flex-col">
+                <label>Resultados Esperados</label>
+                <div id="resultados"></div>
+                <button onclick="adicionarPasso('resultado')">Adicionar Resultado</button>
+            </div>
+        </div>
+
+        <button onclick="salvarCenario()">Salvar Cenário</button>
+    </div>
+
+    <div class="saved-scenarios">
+        <h2>Cenários Salvos</h2>
+        <button onclick="imprimirCenariosSelecionados()">Imprimir Cenários Selecionados</button>
+        <button onclick="exportarTodosParaPDF()">Baixar Todos os Cenários em PDF</button>
+        <table>
+            <thead>
+                <tr>
+                    <th>Nome do Cenário</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="cenariosSalvos">
+            </tbody>
+        </table>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+
+    <script>
+        let cenarios = [];
+        let editIndex = null;
+
+        // Função para adicionar pré-condições
+        function adicionarPreCondicao(texto = '') {
+            const container = document.getElementById('precondicoes');
+            const preCondicaoDiv = document.createElement('div');
+            preCondicaoDiv.className = 'action-step';
+
+            const numeroPreCondicao = document.createElement('span');
+            numeroPreCondicao.className = 'step-number';
+            numeroPreCondicao.textContent = `Pré-condição ${container.children.length + 1}:`;
+
+            const inputPreCondicao = document.createElement('textarea');
+            inputPreCondicao.rows = 2;
+            inputPreCondicao.placeholder = 'Descreva a pré-condição';
+            inputPreCondicao.className = 'pre-condicao';
+            inputPreCondicao.value = texto;
+
+            const deleteButton = document.createElement('button');
+            deleteButton.textContent = 'Excluir';
+            deleteButton.className = 'delete-btn';
+            deleteButton.onclick = function () {
+                container.removeChild(preCondicaoDiv);
+                atualizarNumeracaoPreCondicoes();
+            };
+
+            preCondicaoDiv.appendChild(numeroPreCondicao);
+            preCondicaoDiv.appendChild(inputPreCondicao);
+            preCondicaoDiv.appendChild(deleteButton);
+
+            container.appendChild(preCondicaoDiv);
+        }
+
+        // Função para atualizar a numeração das pré-condições
+        function atualizarNumeracaoPreCondicoes() {
+            const preCondicoes = document.querySelectorAll('#precondicoes .action-step');
+            preCondicoes.forEach((step, index) => {
+                const numero = step.querySelector('.step-number');
+                numero.textContent = `Pré-condição ${index + 1}:`;
+            });
+        }
+
+        // Função para adicionar ações ou resultados esperados
+        function adicionarPasso(tipo, texto = '') {
+            const container = document.getElementById(tipo === 'acao' ? 'acoes' : 'resultados');
+            const div = document.createElement('div');
+            div.className = 'action-step';
+
+            const numero = document.createElement('span');
+            numero.className = 'step-number';
+            numero.textContent = `${tipo === 'acao' ? 'Ação' : 'Resultado'} ${container.children.length + 1}:`;
+
+            const input = document.createElement('textarea');
+            input.rows = 2;
+            input.placeholder = tipo === 'acao' ? 'Descreva a ação' : 'Descreva o resultado esperado';
+            input.className = tipo;
+
+            input.value = texto;
+
+            const deleteButton = document.createElement('button');
+            deleteButton.textContent = 'Excluir';
+            deleteButton.className = 'delete-btn';
+            deleteButton.onclick = function () {
+                container.removeChild(div);
+                atualizarNumeracao(tipo);
+            };
+
+            div.appendChild(numero);
+            div.appendChild(input);
+            div.appendChild(deleteButton);
+
+            container.appendChild(div);
+        }
+
+        // Função para atualizar a numeração das ações ou resultados
+        function atualizarNumeracao(tipo) {
+            const container = document.getElementById(tipo === 'acao' ? 'acoes' : 'resultados');
+            const steps = container.querySelectorAll('.action-step');
+            steps.forEach((step, index) => {
+                const numero = step.querySelector('.step-number');
+                numero.textContent = `${tipo === 'acao' ? 'Ação' : 'Resultado'} ${index + 1}:`;
+            });
+        }
+
+        // Função para salvar o cenário
+        function salvarCenario() {
+            const nome = document.getElementById('nome').value;
+            const empresa = document.getElementById('empresa').value;
+            const dataCriacao = document.getElementById('dataCriacao').value;
+            const autor = document.getElementById('autor').value;
+            const objetivo = document.getElementById('objetivo').value;
+            const criticidade = document.querySelector('input[name="criticidade"]:checked')?.value;
+
+            const preCondicoes = Array.from(document.querySelectorAll('#precondicoes textarea')).map(textarea => textarea.value);
+            const acoes = Array.from(document.querySelectorAll('#acoes textarea')).map(textarea => textarea.value);
+            const resultados = Array.from(document.querySelectorAll('#resultados textarea')).map(textarea => textarea.value);
+
+            const cenario = {
+                nome,
+                empresa,
+                dataCriacao,
+                autor,
+                objetivo,
+                criticidade,
+                preCondicoes,
+                acoes,
+                resultados,
+            };
+
+            if (editIndex !== null) {
+                cenarios[editIndex] = cenario;
+                editIndex = null;
+            } else {
+                cenarios.push(cenario);
+            }
+
+            mostrarCenariosSalvos();
+            resetFormulario();
+        }
+
+        // Função para exibir os cenários salvos
+        function mostrarCenariosSalvos() {
+            const tabela = document.getElementById('cenariosSalvos');
+            tabela.innerHTML = '';
+            cenarios.forEach((cenario, index) => {
+                const tr = document.createElement('tr');
+
+                tr.appendChild(criarTd(cenario.nome));
+                
+                const tdAcoes = document.createElement('td');
+                const editButton = document.createElement('button');
+                editButton.textContent = 'Editar';
+                editButton.className = 'edit-btn';
+                editButton.onclick = () => editarCenario(index);
+
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Excluir';
+                deleteButton.className = 'delete-btn';
+                deleteButton.onclick = () => excluirCenario(index);
+
+                tdAcoes.classList.add('grid-buttons');
+                tdAcoes.appendChild(editButton);
+                tdAcoes.appendChild(deleteButton);
+
+                tr.appendChild(tdAcoes);
+                tabela.appendChild(tr);
+            });
+        }
+
+        // Função para criar células da tabela
+        function criarTd(conteudo) {
+            const td = document.createElement('td');
+            td.textContent = conteudo;
+            return td;
+        }
+
+        // Função para editar cenário
+        function editarCenario(index) {
+            editIndex = index;
+            const cenario = cenarios[index];
+            document.getElementById('nome').value = cenario.nome;
+            document.getElementById('empresa').value = cenario.empresa;
+            document.getElementById('dataCriacao').value = cenario.dataCriacao;
+            document.getElementById('autor').value = cenario.autor;
+            document.getElementById('objetivo').value = cenario.objetivo;
+
+            // Set Criticidade
+            const radio = document.querySelector(`input[name="criticidade"][value="${cenario.criticidade}"]`);
+            if (radio) radio.checked = true;
+
+            // Limpar ações, resultados e pré-condições, depois adicionar os valores salvos
+            document.getElementById('acoes').innerHTML = '';
+            document.getElementById('resultados').innerHTML = '';
+            document.getElementById('precondicoes').innerHTML = '';
+            
+            cenario.preCondicoes.forEach((texto) => adicionarPreCondicao(texto));
+            cenario.acoes.forEach((texto) => adicionarPasso('acao', texto));
+            cenario.resultados.forEach((texto) => adicionarPasso('resultado', texto));
+        }
+
+        // Função para excluir cenário
+        function excluirCenario(index) {
+            cenarios.splice(index, 1);
+            mostrarCenariosSalvos();
+        }
+
+        // Função para selecionar todos os cenários
+        function selecionarTodos() {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(checkbox => checkbox.checked = document.getElementById('selectAll').checked);
+        }
+
+        // Função para imprimir os cenários selecionados
+        function imprimirCenariosSelecionados() {
+            const selectedCenarios = cenarios.filter((cenario, index) => document.querySelectorAll('input[type="checkbox"]')[index].checked);
+            console.log(selectedCenarios);
+        }
+
+        // Função para exportar todos os cenários para PDF
+        function exportarTodosParaPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            cenarios.forEach((cenario, index) => {
+                doc.text(`Cenário ${index + 1}: ${cenario.nome}`, 10, 10 + (index * 20));
+                doc.text(`Criticidade: ${cenario.criticidade}`, 10, 15 + (index * 20));
+                doc.text(`Objetivo: ${cenario.objetivo}`, 10, 20 + (index * 20));
+                doc.text(`Pré-condições: ${cenario.preCondicoes.join(', ')}`, 10, 25 + (index * 20));
+                doc.text(`Ações: ${cenario.acoes.join(', ')}`, 10, 30 + (index * 20));
+                doc.text(`Resultados Esperados: ${cenario.resultados.join(', ')}`, 10, 35 + (index * 20));
+                doc.addPage();
+            });
+            doc.save('cenarios.pdf');
+        }
+    </script>
+</body>
+</html>
