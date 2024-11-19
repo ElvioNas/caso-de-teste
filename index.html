@@ -205,7 +205,7 @@
 
             const numeroPreCondicao = document.createElement('span');
             numeroPreCondicao.className = 'step-number';
-            numeroPreCondicao.textContent = `Pré-condição ${container.children.length + 1}:`;
+            numeroPreCondicao.textContent = `${container.children.length + 1}:`;
 
             const inputPreCondicao = document.createElement('textarea');
             inputPreCondicao.rows = 2;
@@ -245,7 +245,7 @@
 
             const numero = document.createElement('span');
             numero.className = 'step-number';
-            numero.textContent = `${tipo === 'acao' ? 'Ação' : 'Resultado'} ${container.children.length + 1}:`;
+            numero.textContent = `${container.children.length + 1}:`; // Alterado para não repetir "Ação"
 
             const input = document.createElement('textarea');
             input.rows = 2;
@@ -269,7 +269,7 @@
             container.appendChild(div);
         }
 
-        // Função para atualizar a numeração das ações ou resultados
+        // Função para atualizar a numeração das ações e resultados
         function atualizarNumeracao(tipo) {
             const container = document.getElementById(tipo === 'acao' ? 'acoes' : 'resultados');
             const steps = container.querySelectorAll('.action-step');
@@ -281,132 +281,108 @@
 
         // Função para salvar o cenário
         function salvarCenario() {
-            const nome = document.getElementById('nome').value;
             const empresa = document.getElementById('empresa').value;
-            const dataCriacao = document.getElementById('dataCriacao').value;
-            const autor = document.getElementById('autor').value;
+            const nome = document.getElementById('nome').value;
             const objetivo = document.getElementById('objetivo').value;
+            const autor = document.getElementById('autor').value;
             const criticidade = document.querySelector('input[name="criticidade"]:checked')?.value;
+            const preCondicoes = [...document.querySelectorAll('#precondicoes textarea')].map(input => input.value);
+            const acoes = [...document.querySelectorAll('#acoes textarea')].map(input => input.value);
+            const resultados = [...document.querySelectorAll('#resultados textarea')].map(input => input.value);
 
-            const preCondicoes = Array.from(document.querySelectorAll('#precondicoes textarea')).map(textarea => textarea.value);
-            const acoes = Array.from(document.querySelectorAll('#acoes textarea')).map(textarea => textarea.value);
-            const resultados = Array.from(document.querySelectorAll('#resultados textarea')).map(textarea => textarea.value);
+            if (nome && empresa && objetivo && autor && criticidade) {
+                const cenario = {
+                    empresa,
+                    nome,
+                    objetivo,
+                    autor,
+                    criticidade,
+                    preCondicoes,
+                    acoes,
+                    resultados
+                };
 
-            const cenario = {
-                nome,
-                empresa,
-                dataCriacao,
-                autor,
-                objetivo,
-                criticidade,
-                preCondicoes,
-                acoes,
-                resultados,
-            };
+                if (editIndex === null) {
+                    cenarios.push(cenario);
+                } else {
+                    cenarios[editIndex] = cenario;
+                    editIndex = null;
+                }
 
-            if (editIndex !== null) {
-                cenarios[editIndex] = cenario;
-                editIndex = null;
+                atualizarTabela();
+                resetarFormulario();
             } else {
-                cenarios.push(cenario);
+                alert('Por favor, preencha todos os campos obrigatórios.');
             }
-
-            mostrarCenariosSalvos();
-            resetFormulario();
         }
 
-        // Função para exibir os cenários salvos
-        function mostrarCenariosSalvos() {
+        // Função para atualizar a tabela de cenários salvos
+        function atualizarTabela() {
             const tabela = document.getElementById('cenariosSalvos');
             tabela.innerHTML = '';
             cenarios.forEach((cenario, index) => {
                 const tr = document.createElement('tr');
-
-                tr.appendChild(criarTd(cenario.nome));
-                
-                const tdAcoes = document.createElement('td');
-                const editButton = document.createElement('button');
-                editButton.textContent = 'Editar';
-                editButton.className = 'edit-btn';
-                editButton.onclick = () => editarCenario(index);
-
-                const deleteButton = document.createElement('button');
-                deleteButton.textContent = 'Excluir';
-                deleteButton.className = 'delete-btn';
-                deleteButton.onclick = () => excluirCenario(index);
-
-                tdAcoes.classList.add('grid-buttons');
-                tdAcoes.appendChild(editButton);
-                tdAcoes.appendChild(deleteButton);
-
-                tr.appendChild(tdAcoes);
+                tr.innerHTML = `
+                    <td>${cenario.nome}</td>
+                    <td class="grid-buttons">
+                        <button class="edit-btn" onclick="editarCenario(${index})">Editar</button>
+                        <button class="delete-btn" onclick="excluirCenario(${index})">Excluir</button>
+                    </td>
+                `;
                 tabela.appendChild(tr);
             });
         }
 
-        // Função para criar células da tabela
-        function criarTd(conteudo) {
-            const td = document.createElement('td');
-            td.textContent = conteudo;
-            return td;
-        }
-
-        // Função para editar cenário
-        function editarCenario(index) {
-            editIndex = index;
-            const cenario = cenarios[index];
-            document.getElementById('nome').value = cenario.nome;
-            document.getElementById('empresa').value = cenario.empresa;
-            document.getElementById('dataCriacao').value = cenario.dataCriacao;
-            document.getElementById('autor').value = cenario.autor;
-            document.getElementById('objetivo').value = cenario.objetivo;
-
-            // Set Criticidade
-            const radio = document.querySelector(`input[name="criticidade"][value="${cenario.criticidade}"]`);
-            if (radio) radio.checked = true;
-
-            // Limpar ações, resultados e pré-condições, depois adicionar os valores salvos
-            document.getElementById('acoes').innerHTML = '';
-            document.getElementById('resultados').innerHTML = '';
-            document.getElementById('precondicoes').innerHTML = '';
-            
-            cenario.preCondicoes.forEach((texto) => adicionarPreCondicao(texto));
-            cenario.acoes.forEach((texto) => adicionarPasso('acao', texto));
-            cenario.resultados.forEach((texto) => adicionarPasso('resultado', texto));
-        }
-
-        // Função para excluir cenário
+        // Função para excluir um cenário
         function excluirCenario(index) {
             cenarios.splice(index, 1);
-            mostrarCenariosSalvos();
+            atualizarTabela();
         }
 
-        // Função para selecionar todos os cenários
-        function selecionarTodos() {
-            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
-            checkboxes.forEach(checkbox => checkbox.checked = document.getElementById('selectAll').checked);
+        // Função para editar um cenário
+        function editarCenario(index) {
+            const cenario = cenarios[index];
+            document.getElementById('empresa').value = cenario.empresa;
+            document.getElementById('nome').value = cenario.nome;
+            document.getElementById('objetivo').value = cenario.objetivo;
+            document.getElementById('autor').value = cenario.autor;
+
+            // Marcar a criticidade
+            document.querySelector(`input[name="criticidade"][value="${cenario.criticidade}"]`).checked = true;
+
+            cenario.preCondicoes.forEach(condicao => adicionarPreCondicao(condicao));
+            cenario.acoes.forEach(acao => adicionarPasso('acao', acao));
+            cenario.resultados.forEach(resultado => adicionarPasso('resultado', resultado));
+
+            editIndex = index;
         }
 
-        // Função para imprimir os cenários selecionados
-        function imprimirCenariosSelecionados() {
-            const selectedCenarios = cenarios.filter((cenario, index) => document.querySelectorAll('input[type="checkbox"]')[index].checked);
-            console.log(selectedCenarios);
+        // Função para resetar o formulário
+        function resetarFormulario() {
+            document.getElementById('empresa').value = '';
+            document.getElementById('nome').value = '';
+            document.getElementById('objetivo').value = '';
+            document.getElementById('autor').value = '';
+            document.querySelectorAll('input[name="criticidade"]').forEach(radio => radio.checked = false);
+
+            document.getElementById('precondicoes').innerHTML = '';
+            document.getElementById('acoes').innerHTML = '';
+            document.getElementById('resultados').innerHTML = '';
         }
 
-        // Função para exportar todos os cenários para PDF
+        // Função para gerar PDF com todos os cenários
         function exportarTodosParaPDF() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             cenarios.forEach((cenario, index) => {
-                doc.text(`Cenário ${index + 1}: ${cenario.nome}`, 10, 10 + (index * 20));
-                doc.text(`Criticidade: ${cenario.criticidade}`, 10, 15 + (index * 20));
-                doc.text(`Objetivo: ${cenario.objetivo}`, 10, 20 + (index * 20));
-                doc.text(`Pré-condições: ${cenario.preCondicoes.join(', ')}`, 10, 25 + (index * 20));
-                doc.text(`Ações: ${cenario.acoes.join(', ')}`, 10, 30 + (index * 20));
-                doc.text(`Resultados Esperados: ${cenario.resultados.join(', ')}`, 10, 35 + (index * 20));
-                doc.addPage();
+                doc.text(`Cenário ${index + 1}: ${cenario.nome}`, 10, 10 + index * 30);
             });
             doc.save('cenarios.pdf');
+        }
+
+        // Função para imprimir os cenários selecionados
+        function imprimirCenariosSelecionados() {
+            window.print();
         }
     </script>
 </body>
