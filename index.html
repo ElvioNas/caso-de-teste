@@ -10,7 +10,7 @@
         }
         body {
             font-family: Arial, sans-serif;
-            background-color: #f0f2f5;
+            background-color: #818ba08e;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -18,7 +18,7 @@
             padding: 20px;
         }
         .container, .saved-scenarios {
-            background-color: #ffffff;
+            background-color: #c7c3c3;
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             width: 80%;
@@ -384,6 +384,63 @@
         function imprimirCenariosSelecionados() {
             window.print();
         }
+        function exportarTodosParaPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    let y = 10; // Posição vertical inicial
+
+    cenarios.forEach((cenario, index) => {
+        if (y > 270) { // Verifica se precisa de uma nova página
+            doc.addPage();
+            y = 10;
+        }
+
+        doc.setFontSize(12);
+        doc.text(`Cenário ${index + 1}: ${cenario.nome}`, 10, y);
+        y += 10;
+        doc.text(`Empresa: ${cenario.empresa}`, 10, y);
+        y += 10;
+        doc.text(`Autor: ${cenario.autor}`, 10, y);
+        y += 10;
+        doc.text(`Data de Criação: ${document.getElementById('dataCriacao').value || 'Não informado'}`, 10, y);
+        y += 10;
+        doc.text(`Criticidade: ${cenario.criticidade}`, 10, y);
+        y += 10;
+        doc.text(`Objetivo:`, 10, y);
+        y += 10;
+        doc.text(cenario.objetivo, 10, y, { maxWidth: 180 });
+        y += 20;
+
+        doc.text(`Pré-condições:`, 10, y);
+        y += 10;
+        cenario.preCondicoes.forEach((condicao, idx) => {
+            if (y > 270) { doc.addPage(); y = 10; }
+            doc.text(`${idx + 1}. ${condicao}`, 15, y, { maxWidth: 180 });
+            y += 10;
+        });
+
+        doc.text(`Ações:`, 10, y);
+        y += 10;
+        cenario.acoes.forEach((acao, idx) => {
+            if (y > 270) { doc.addPage(); y = 10; }
+            doc.text(`${idx + 1}. ${acao}`, 15, y, { maxWidth: 180 });
+            y += 10;
+        });
+
+        doc.text(`Resultados Esperados:`, 10, y);
+        y += 10;
+        cenario.resultados.forEach((resultado, idx) => {
+            if (y > 270) { doc.addPage(); y = 10; }
+            doc.text(`${idx + 1}. ${resultado}`, 15, y, { maxWidth: 180 });
+            y += 10;
+        });
+
+        y += 10; // Espaço antes do próximo cenário
+    });
+
+    doc.save('cenarios_completos.pdf');
+}
+
     </script>
 </body>
 </html>
